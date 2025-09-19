@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Умный поиск книг</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .search-section {
+            padding: 30px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-tab {
+            padding: 12px 24px;
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .search-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .search-tab:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .search-form {
+            display: grid;
+            gap: 15px;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 15px;
+        }
+
+        input, select, textarea {
+            padding: 15px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            width: 100%;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            padding: 15px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .advanced-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .result-section {
+            padding: 30px;
+        }
+
+        .book-info {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .book-details {
+            display: grid;
+            gap: 15px;
+        }
+
+        .book-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .meta-label {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fef2f2;
+            color: var(--error);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--error);
+        }
+
+        .success {
+            background: #f0fdf4;
+            color: var(--success);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--success);
+        }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .book-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .book-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .book-card-cover {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .book-card-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .book-card-author {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .search-history {
+            margin-top: 30px;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 12px;
+        }
+
+        .history-items {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .history-item {
+            padding: 8px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .book-info {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .book-meta {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Умный поиск книг</h1>
+            <div class="subtitle">Найдите любую книгу по ISBN, названию, автору или ключевым словам</div>
+        </header>
+
+        <div class="search-section">
+            <div class="search-tabs">
+                <div class="search-tab active" data-tab="isbn">По ISBN</div>
+                <div class="search-tab" data-tab="title">По названию</div>
+                <div class="search-tab" data-tab="author">По автору</div>
+                <div class="search-tab" data-tab="keyword">По ключевым словам</div>
+            </div>
+
+            <div class="search-form">
+                <div class="search-grid">
+                    <input type="text" id="searchInput" placeholder="Введите ISBN книги (10 или 13 цифр)">
+                    <button id="searchButton">Найти книгу</button>
+                </div>
+
+                <div class="advanced-options">
+                    <select id="languageSelect">
+                        <option value="">Все языки</option>
+                        <option value="ru">Русский</option>
+                        <option value="en">Английский</option>
+                        <option value="de">Немецкий</option>
+                        <option value="fr">Французский</option>
+                        <option value="es">Испанский</option>
+                    </select>
+
+                    <select id="yearSelect">
+                        <option value="">Все годы</option>
+                        <option value="2020">2020+</option>
+                        <option value="2010">2010-2019</option>
+                        <option value="2000">2000-2009</option>
+                        <option value="1990">1990-1999</option>
+                        <option value="1980">до 1980</option>
+                    </select>
+
+                    <select id="sortSelect">
+                        <option value="relevance">По релевантности</option>
+                        <option value="newest">Сначала новые</option>
+                        <option value="oldest">Сначала старые</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-section">
+            <div id="result">
+                <div style="text-align: center; color: var(--text-light); padding: 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 20px;">📖</div>
+                    <h3>Начните поиск книг</h3>
+                    <p>Используйте ISBN, название, автора или ключевые слова для поиска</p>
+                </div>
+            </div>
+
+            <div class="search-history" id="searchHistory" style="display: none;">
+                <h4>История поиска</h4>
+                <div class="history-items" id="historyItems"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
